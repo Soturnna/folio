@@ -1,0 +1,6 @@
+Folio.xcodeproj/
+build/
+Payload/
+*.ipa
+.DS_Store
+Folio/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png
