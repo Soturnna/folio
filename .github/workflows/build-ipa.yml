@@ -86,6 +86,20 @@ jobs:
             Instale com o Sideloadly usando seu Apple ID.
             Link fixo da versão mais recente: https://github.com/${{ github.repository }}/releases/latest/download/Folio.ipa
 
+      - name: Salvar o log no branch ci-logs (em caso de erro)
+        if: failure()
+        run: |
+          touch build.log
+          grep -iE "error|failed|warning: unable" build.log | sort -u > errors.txt || true
+          tail -150 build.log > tail.txt
+          git config user.name "folio-ci"
+          git config user.email "folio-ci@users.noreply.github.com"
+          git checkout --orphan ci-logs
+          git rm -rqf --cached . || true
+          git add -f errors.txt tail.txt
+          git commit -qm "log run ${{ github.run_number }}"
+          git push -qf origin ci-logs
+
       - name: Publicar o log em caso de erro
         if: failure()
         uses: actions/upload-artifact@v4
