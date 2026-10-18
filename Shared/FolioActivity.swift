@@ -31,20 +31,57 @@ enum LiveActivityManager {
         Activity<FolioActivityAttributes>.activities
     }
 
+    /// Resultado da última tentativa, mostrado em Ajustes para diagnóstico.
+    static var lastResult = "Ainda não tentou"
+
+    /// Resumo do estado atual, para a linha "Estado do painel" em Ajustes.
+    static var statusDescription: String {
+        let auth = ActivityAuthorizationInfo()
+        if !auth.areActivitiesEnabled { return "Bloqueado nos Ajustes do iPhone" }
+        if let first = activities.first { return "Ativo (\(describe(first.activityState)))" }
+        return lastResult
+    }
+
     /// Cria o painel se ainda não existir. Só funciona com o app na tela
     /// (regra do iOS), por isso é chamado quando o app está aberto.
-    static func startIfNeeded(pages: Int, startedAt: Date, online: Bool) {
-        guard isEnabled, ActivityAuthorizationInfo().areActivitiesEnabled else { return }
+    @discardableResult
+    static func startIfNeeded(pages: Int, startedAt: Date, online: Bool, force: Bool = false) -> String {
+        guard isEnabled || force else {
+            lastResult = "Desligado no Folio"
+            return lastResult
+        }
+        guard ActivityAuthorizationInfo().areActivitiesEnabled else {
+            lastResult = "Bloqueado nos Ajustes do iPhone"
+            return lastResult
+        }
         let state = FolioActivityAttributes.ContentState(pages: pages, startedAt: startedAt, online: online)
         if !activities.isEmpty {
             Task { await update(state) }
-            return
+            lastResult = "Ativo"
+            return lastResult
         }
-        _ = try? Activity.request(
-            attributes: FolioActivityAttributes(),
-            content: ActivityContent(state: state, staleDate: nil),
-            pushType: nil
-        )
+        do {
+            let activity = try Activity.request(
+                attributes: FolioActivityAttributes(),
+                content: ActivityContent(state: state, staleDate: nil),
+                pushType: nil
+            )
+            lastResult = "Criado (\(describe(activity.activityState)))"
+        } catch {
+            lastResult = "Erro: \(error.localizedDescription) [\(String(describing: error))]"
+        }
+        return lastResult
+    }
+
+    private static func describe(_ state: ActivityState) -> String {
+        switch state {
+        case .active: "ativo"
+        case .pending: "pendente"
+        case .stale: "desatualizado"
+        case .ended: "encerrado"
+        case .dismissed: "dispensado"
+        @unknown default: "desconhecido"
+        }
     }
 
     static func update(_ state: FolioActivityAttributes.ContentState) async {

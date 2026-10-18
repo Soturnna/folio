@@ -13,6 +13,7 @@ struct SettingsView: View {
     @AppStorage(SettingsKey.liveActivity) private var liveActivity = true
     @AppStorage(SettingsKey.mediaControl) private var mediaControl = false
     @Environment(\.dismiss) private var dismiss
+    @State private var panelStatus = LiveActivityManager.statusDescription
 
     var body: some View {
         NavigationStack {
@@ -34,6 +35,16 @@ struct SettingsView: View {
                 Section {
                     toggle("Painel na tela bloqueada", "Live Activity com Voltar e Avançar durante a leitura", $liveActivity)
                     toggle("Controle por fones e mídia", "AirPods, fones Bluetooth e botões ⏮ ⏭", $mediaControl)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Estado do painel")
+                        Text(panelStatus)
+                            .font(.footnote.monospaced())
+                            .foregroundStyle(.secondary)
+                            .textSelection(.enabled)
+                    }
+                    Button("Mostrar painel agora") {
+                        panelStatus = kindle.showLiveActivity(force: true)
+                    }
                 } header: {
                     Text("Tela bloqueada")
                 } footer: {

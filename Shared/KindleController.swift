@@ -150,10 +150,11 @@ final class KindleController {
     }
 
     /// Mostra o painel da tela bloqueada (chamado com o app aberto).
-    func showLiveActivity() {
+    @discardableResult
+    func showLiveActivity(force: Bool = false) -> String {
         if sessionStart == nil { sessionStart = Date() }
         let online: Bool
         if case .online = state { online = true } else { online = false }
-        LiveActivityManager.startIfNeeded(pages: pagesThisSession, startedAt: sessionStart ?? Date(), online: online)
+        return LiveActivityManager.startIfNeeded(pages: pagesThisSession, startedAt: sessionStart ?? Date(), online: online, force: force)
     }
 }
