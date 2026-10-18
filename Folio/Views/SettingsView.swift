@@ -10,6 +10,8 @@ struct SettingsView: View {
     @AppStorage(SettingsKey.haptics) private var haptics = true
     @AppStorage(SettingsKey.invert) private var invert = false
     @AppStorage(SettingsKey.keepAwake) private var keepAwake = true
+    @AppStorage(SettingsKey.liveActivity) private var liveActivity = true
+    @AppStorage(SettingsKey.mediaControl) private var mediaControl = false
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -27,6 +29,15 @@ struct SettingsView: View {
                     toggle("Vibração", "Confirmação tátil a cada página", $haptics)
                     toggle("Inverter direção", "Para mangás e leitura da direita para a esquerda", $invert)
                     toggle("Manter tela ligada", "O iPhone não bloqueia enquanto o Folio está aberto", $keepAwake)
+                }
+
+                Section {
+                    toggle("Painel na tela bloqueada", "Live Activity com Voltar e Avançar durante a leitura", $liveActivity)
+                    toggle("Controle por fones e mídia", "AirPods, fones Bluetooth e botões ⏮ ⏭", $mediaControl)
+                } header: {
+                    Text("Tela bloqueada")
+                } footer: {
+                    Text("O controle de mídia mantém um áudio silencioso tocando: interrompe a música e gasta um pouco mais de bateria. Os botões da Central de Controle e dos cantos da tela bloqueada (iOS 18) são adicionados pelo próprio iPhone, ao editar esses lugares.")
                 }
 
                 Section {

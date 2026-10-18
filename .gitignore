@@ -4,3 +4,5 @@ Payload/
 *.ipa
 .DS_Store
 Folio/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png
+FolioWidgets/Assets.xcassets/FolioMark.imageset/FolioMark.png
+Folio/Resources/Assets.xcassets/NowPlayingArt.imageset/NowPlayingArt.png

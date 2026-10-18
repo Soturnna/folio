@@ -9,6 +9,8 @@ enum SettingsKey {
     static let haptics = "ajuste.vibracao"
     static let invert = "ajuste.inverter"
     static let keepAwake = "ajuste.telaLigada"
+    static let liveActivity = "ajuste.liveActivity"
+    static let mediaControl = "ajuste.midia"
 }
 
 enum SettingsDefaults {
@@ -21,7 +23,13 @@ enum SettingsDefaults {
             SettingsKey.volumeButtons: true,
             SettingsKey.haptics: true,
             SettingsKey.invert: false,
-            SettingsKey.keepAwake: true
+            SettingsKey.keepAwake: true,
+            SettingsKey.liveActivity: true,
+            SettingsKey.mediaControl: false
         ])
+    }
+
+    static func bool(_ key: String, default value: Bool) -> Bool {
+        UserDefaults.standard.object(forKey: key) as? Bool ?? value
     }
 }

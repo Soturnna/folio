@@ -34,6 +34,10 @@ jobs:
         run: |
           rsvg-convert -w 1024 -h 1024 -b "#16181C" design/icon.svg \
             -o Folio/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png
+          rsvg-convert -w 600 -h 600 -b "#16181C" design/icon.svg \
+            -o Folio/Resources/Assets.xcassets/NowPlayingArt.imageset/NowPlayingArt.png
+          rsvg-convert -w 120 -h 120 -b "#16181C" design/icon.svg \
+            -o FolioWidgets/Assets.xcassets/FolioMark.imageset/FolioMark.png
 
       - name: Gerar o projeto Xcode
         run: xcodegen generate
@@ -53,6 +57,8 @@ jobs:
             CODE_SIGN_IDENTITY="" \
             build | tee build.log | grep -E "error:|warning: .*deprecated|BUILD (SUCCEEDED|FAILED)" || true
           test -d build/Build/Products/Release-iphoneos/Folio.app
+          test -d build/Build/Products/Release-iphoneos/Folio.app/PlugIns/FolioWidgets.appex
+          grep -E "error:" build.log | head -40 | while read -r l; do echo "::error::$l"; done
 
       - name: Empacotar o .ipa
         run: |
@@ -72,7 +78,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: build-${{ github.run_number }}
-          name: Folio 1.0 (build ${{ github.run_number }})
+          name: Folio 1.1 (build ${{ github.run_number }})
           make_latest: true
           files: Folio.ipa
           body: |

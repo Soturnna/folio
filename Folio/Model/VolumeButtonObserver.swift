@@ -24,7 +24,10 @@ final class VolumeButtonObserver: ObservableObject {
         guard observation == nil else { return }
         let audio = AVAudioSession.sharedInstance()
         // .ambient + mixWithOthers: não interrompe música ou audiolivro tocando.
-        try? audio.setCategory(.ambient, options: [.mixWithOthers])
+        // Se o controle de mídia estiver ligado, ele já cuida da sessão de áudio.
+        if !MediaRemoteController.shared.isRunning {
+            try? audio.setCategory(.ambient, options: [.mixWithOthers])
+        }
         try? audio.setActive(true)
 
         baseline = audio.outputVolume

@@ -10,6 +10,8 @@ struct RemoteView: View {
     @AppStorage(SettingsKey.haptics) private var haptics = true
     @AppStorage(SettingsKey.invert) private var invert = false
     @AppStorage(SettingsKey.keepAwake) private var keepAwake = true
+    @AppStorage(SettingsKey.liveActivity) private var liveActivity = true
+    @AppStorage(SettingsKey.mediaControl) private var mediaControl = false
 
     @State private var showSettings = false
     @State private var showConnect = false
@@ -66,13 +68,22 @@ struct RemoteView: View {
             ReadingModeView()
         }
         .onAppear {
+            kindle.onTurn = { pages in MediaRemoteController.shared.refresh(pages: pages) }
+            applyMedia()
             configureVolume()
             applyKeepAwake()
             if kindle.host == nil {
                 showConnect = true
             } else {
-                Task { await kindle.ping() }
+                Task { await connectAndShowPanel() }
             }
+        }
+        .onChange(of: liveActivity) { _, enabled in
+            if enabled { kindle.showLiveActivity() } else { Task { await LiveActivityManager.endAll() } }
+        }
+        .onChange(of: mediaControl) { _, _ in
+            applyMedia()
+            configureVolume()
         }
         .onChange(of: volumeButtons) { _, _ in configureVolume() }
         .onChange(of: invert) { _, _ in configureVolume() }
@@ -81,7 +92,7 @@ struct RemoteView: View {
             if phase == .active {
                 configureVolume()
                 applyKeepAwake()
-                Task { await kindle.ping() }
+                Task { await connectAndShowPanel() }
             } else {
                 volume.stop()
                 UIApplication.shared.isIdleTimerDisabled = false
@@ -295,6 +306,18 @@ struct RemoteView: View {
         volume.onUp = { Task { await kindle.turn(invert ? .previous : .next) } }
         volume.onDown = { Task { await kindle.turn(invert ? .next : .previous) } }
         volume.start()
+    }
+
+    /// Confere a conexão e, se o ajuste estiver ligado, mostra o painel
+    /// da tela bloqueada. O iOS só deixa criar o painel com o app aberto.
+    private func connectAndShowPanel() async {
+        guard kindle.host != nil else { return }
+        await kindle.ping()
+        if liveActivity, scenePhase == .active { kindle.showLiveActivity() }
+    }
+
+    private func applyMedia() {
+        if mediaControl { MediaRemoteController.shared.start() } else { MediaRemoteController.shared.stop() }
     }
 
     private func applyKeepAwake() {

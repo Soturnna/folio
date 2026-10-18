@@ -38,6 +38,9 @@ final class KindleController {
 
     private let session: URLSession
 
+    /// Avisado a cada virada (usado pelo controle de mídia para atualizar a tela bloqueada).
+    var onTurn: ((Int) -> Void)?
+
     private init() {
         let config = URLSessionConfiguration.ephemeral
         config.timeoutIntervalForRequest = 2.5
@@ -69,7 +72,10 @@ final class KindleController {
         UserDefaults.standard.set(host, forKey: SettingsKey.host)
         UserDefaults.standard.set(port, forKey: SettingsKey.port)
         state = .checking
-        Task { await ping() }
+        Task {
+            await ping()
+            if LiveActivityManager.isEnabled { showLiveActivity() }
+        }
     }
 
     private func url(for path: String) -> URL? {
@@ -97,10 +103,13 @@ final class KindleController {
             pagesThisSession = max(0, pagesThisSession + (direction == .next ? 1 : -1))
             lastAction = direction
             successCount += 1
+            onTurn?(pagesThisSession)
+            await LiveActivityManager.update(activityState(online: true))
             return true
         } catch {
             state = .offline
             failureCount += 1
+            await LiveActivityManager.update(activityState(online: false))
             return false
         }
     }
@@ -126,5 +135,25 @@ final class KindleController {
         pagesThisSession = 0
         sessionStart = nil
         lastAction = nil
+        onTurn?(0)
+        Task { await LiveActivityManager.update(activityState(online: state != .offline)) }
+    }
+
+    // MARK: Live Activity
+
+    func activityState(online: Bool) -> FolioActivityAttributes.ContentState {
+        FolioActivityAttributes.ContentState(
+            pages: pagesThisSession,
+            startedAt: sessionStart ?? Date(),
+            online: online
+        )
+    }
+
+    /// Mostra o painel da tela bloqueada (chamado com o app aberto).
+    func showLiveActivity() {
+        if sessionStart == nil { sessionStart = Date() }
+        let online: Bool
+        if case .online = state { online = true } else { online = false }
+        LiveActivityManager.startIfNeeded(pages: pagesThisSession, startedAt: sessionStart ?? Date(), online: online)
     }
 }
