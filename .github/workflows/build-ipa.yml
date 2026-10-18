@@ -56,8 +56,7 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
             build | tee build.log | grep -E "error:|warning: .*deprecated|BUILD (SUCCEEDED|FAILED)" || true
-          grep -iE "error|failed" build.log | sort -u | head -40 | while read -r l; do echo "::error::${l: -300}"; done
-          tail -25 build.log | while read -r l; do echo "::notice::${l: -300}"; done
+          { grep -E "error:" build.log || true; } | sort -u | head -40 | while read -r l; do echo "::error::${l: -300}"; done
           test -d build/Build/Products/Release-iphoneos/Folio.app
           test -d build/Build/Products/Release-iphoneos/Folio.app/PlugIns/FolioWidgets.appex
 
