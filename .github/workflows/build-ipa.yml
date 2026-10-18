@@ -5,6 +5,9 @@ on:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: macos-latest
@@ -22,6 +25,7 @@ jobs:
         run: |
           xcodebuild -version
           xcodebuild -showsdks | grep -i iphoneos
+          echo "::notice title=Ambiente::$(xcodebuild -version | tr '\n' ' ') | $(xcodebuild -showsdks | grep -o 'iphoneos[0-9.]*' | head -1)"
 
       - name: Instalar o XcodeGen e o renderizador de SVG
         run: brew install xcodegen librsvg
@@ -63,6 +67,17 @@ jobs:
           name: Folio-ipa
           path: Folio.ipa
           retention-days: 30
+
+      - name: Publicar na página de Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: Folio 1.0 (build ${{ github.run_number }})
+          make_latest: true
+          files: Folio.ipa
+          body: |
+            Instale com o Sideloadly usando seu Apple ID.
+            Link fixo da versão mais recente: https://github.com/${{ github.repository }}/releases/latest/download/Folio.ipa
 
       - name: Publicar o log em caso de erro
         if: failure()
